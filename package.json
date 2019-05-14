@@ -1,0 +1,30 @@
+{
+  "name": "mmm-justwatch",
+  "version": "1.0.0",
+  "description": "MagicMirror-module showing the latest TV/movie releases via JustWatch.com",
+  "main": "MMM-JustWatch.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pigulla/MMM-JustWatch.git"
+  },
+  "keywords": [
+    "magic",
+    "mirror"
+  ],
+  "author": "Raphael Pigulla <pigulla@four66.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pigulla/MMM-JustWatch/issues"
+  },
+  "homepage": "https://github.com/pigulla/MMM-JustWatch#readme",
+  "dependencies": {
+    "@hapi/joi": "^15.0.3",
+    "assert-plus": "^1.0.0",
+    "axios": "^0.18.0",
+    "date-fns": "^1.30.1",
+    "json-strictify": "^5.0.3"
+  }
+}
