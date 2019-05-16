@@ -1,7 +1,9 @@
 {% if items %}
     {% for item in items %}
         {% if item.poster %}
-            <div class="poster" style="background-image:url({{ item.poster }})"></div>
+            <div class="poster" style="background-image:url({{ item.poster }})">
+                <span>{{ item.title }}</span>
+            </div>
         {% else %}
             <div class="poster empty">
                 <span>{{ item.title }} ({{ item.year }})</span>

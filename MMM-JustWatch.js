@@ -10,7 +10,7 @@ Module.register('MMM-JustWatch', {
     },
 
     start() {
-        Log.info('Starting module ' + this.name);
+        Log.info(this.name + '/' + this.identifier + ': Starting module');
 
         this.items = null;
 
@@ -18,8 +18,10 @@ Module.register('MMM-JustWatch', {
     },
 
     socketNotificationReceived(notification, payload, sender) {
+        console.log(notification, payload, sender);
         if (notification === 'DATA') {
             if (payload.identifier === this.identifier) {
+                Log.info(this.name + '/' + this.identifier + ': Data received');
                 this.items = payload.data;
                 this.updateDom();
             }

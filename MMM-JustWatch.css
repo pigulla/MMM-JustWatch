@@ -12,6 +12,7 @@
     display: inline-flex;
     box-sizing: border-box;
     background-size: contain;
+    position: relative;
 }
 
 .poster.empty {
@@ -37,4 +38,17 @@
     line-height: 20px;
     font-variant: small-caps;
     z-index: 1;
+}
+
+.poster:not(.empty) span {
+    position: absolute;
+    bottom: 0;
+    font-size: 12px;
+    line-height: 15px;
+    max-height: 45px;
+    background-color: rgba(0, 0, 0, 0.75);
+    width: 100%;
+    padding: 3px;
+    text-transform: uppercase;
+    text-align: center;
 }

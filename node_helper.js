@@ -134,7 +134,7 @@ module.exports = NodeHelper.create({
         console.debug(this.name + '/' + identifier + ': Next update will run in ' + Math.ceil(config.updateInterval / 1000) + ' seconds');
         const id = setTimeout(function () {
             self.updateTimeouts.delete(id);
-            self.executeAndReschedule(config);
+            self.executeAndReschedule(config, identifier);
         }, config.updateInterval);
         this.updateTimeouts.add(id);
     },
