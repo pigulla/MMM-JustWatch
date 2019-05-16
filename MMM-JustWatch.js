@@ -1,8 +1,12 @@
 Module.register('MMM-JustWatch', {
     defaults: {
-        locale: 'de_DE',
+        locale: 'en_US',
         search: {
         }
+    },
+
+    getStyles() {
+        return ['MMM-JustWatch.css'];
     },
 
     start() {
@@ -10,21 +14,25 @@ Module.register('MMM-JustWatch', {
 
         this.items = null;
 
-        this.sendSocketNotification('ADD:' + this.identifier, this.config);
+        this.sendSocketNotification('ADD', { identifier: this.identifier, config: this.config });
     },
 
     socketNotificationReceived(notification, payload, sender) {
-        if (notification === ('DATA:' + this.identifier)) {
-            this.items = payload;
-            this.updateDom();
+        if (notification === 'DATA') {
+            if (payload.identifier === this.identifier) {
+                this.items = payload.data;
+                this.updateDom();
+            }
+        } else {
+            Log.warn('Unknown notification: ' + notification);
         }
     },
 
     getTemplate() {
-        return 'template.html';
+        return this.config.coverFlow ? 'template.coverflow.html' : 'template.table.html';
     },
 
     getTemplateData() {
-        return { items: this.items };
+        return { items: this.items, config: this.config };
     }
 });

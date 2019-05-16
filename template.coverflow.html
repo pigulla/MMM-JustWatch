@@ -1,0 +1,15 @@
+{% if items %}
+    {% for item in items %}
+        {% if item.poster %}
+            <div class="poster" style="background-image:url({{ item.poster }})"></div>
+        {% else %}
+            <div class="poster empty">
+                <span>{{ item.title }} ({{ item.year }})</span>
+            </div>
+        {% endif %}
+    {% else %}
+        no new releases
+    {% endfor %}
+{% else %}
+    loading
+{% endif %}

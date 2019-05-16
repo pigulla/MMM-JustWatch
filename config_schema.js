@@ -7,6 +7,15 @@ function null_or_array() {
 module.exports = Joi.object().unknown(false).keys({
     locale: Joi.string().required().regex(/^[a-z]+_[A-Z]+$/),
     updateInterval: Joi.number().integer().positive().default(60 * 1000),
+    maxEntries: Joi.number().integer().positive().default(10),
+    alwaysShowOriginalTitle: Joi.boolean().default(false),
+    hideProviderIcon: Joi.boolean().default(false),
+    coverFlow: Joi.boolean().default(false),
+    sort: Joi.array()
+        .items(Joi.object().unknown(false).keys({
+            key: Joi.string().only('title', 'year', 'providerName'),
+            direction: Joi.string().only('asc', 'desc')
+        })).default([{ key: 'title', order: 'asc' }]),
     search: Joi.object().required().unknown(false).keys({
         content_types: null_or_array('movie', 'show_season'),
         age_certifications: null_or_array('0', '6', '12', '16', '18'),

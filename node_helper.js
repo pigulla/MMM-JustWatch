@@ -4,12 +4,27 @@ const date_fns = require('date-fns');
 const Joi = require('@hapi/joi');
 const JSONs = require('json-strictify');
 const NodeHelper = require('node_helper');
+const uniqBy = require('lodash.uniqby');
 
 const schema = require('./config_schema');
 
 const axios = Axios.create({
     baseURL: 'https://apis.justwatch.com/content/'
 });
+
+function multiSort(fns) {
+    return function (a, b) {
+        for (let i = 0; i < fns.length; i++) {
+            const c = fns[i](a, b);
+
+            if (c !== 0) {
+                return c;
+            }
+        }
+
+        return 0;
+    };
+}
 
 module.exports = NodeHelper.create({
     start() {
@@ -84,9 +99,8 @@ module.exports = NodeHelper.create({
     },
 
     socketNotificationReceived(notification, payload) {
-        if (notification.substr(0, 4) === 'ADD:') {
-            const identifier = notification.substr(4);
-            this.handleAdd(payload, identifier);
+        if (notification === 'ADD') {
+            this.handleAdd(payload.config, payload.identifier);
         } else {
             console.warn(this.name + ': Unknown notification (' + notification + ')');
         }
@@ -97,27 +111,27 @@ module.exports = NodeHelper.create({
 
         if (result.error) {
             const firstError = result.error.details[0];
-            console.error(this.name + ': Invalid configuration (' + firstError.message + ')');
-            this.sendSocketNotification('CONFIGURATION_ERROR', firstError);
+            console.error(this.name + '/' + identifier + ': Invalid configuration (' + firstError.message + ')');
+            this.sendSocketNotification('CONFIGURATION_ERROR', { identifier, message: firstError.message });
             return;
         }
 
-        await this.executeAndReschedule(result.value);
+        await this.executeAndReschedule(result.value, identifier);
     },
 
-    async executeAndReschedule(config) {
+    async executeAndReschedule(config, identifier) {
         const self = this;
 
         try {
             const data = await this.loadData(config);
-            console.debug(this.name + ': Update successful');
-            this.sendSocketNotification('DATA', data);
+            console.debug(this.name + '/' + identifier + ': Update successful');
+            this.sendSocketNotification('DATA', { identifier, data });
         } catch (error) {
-            console.error(this.name + ': ' + error.message);
-            this.sendSocketNotification('LOAD_ERROR', error.message);
+            console.error(this.name + '/' + identifier + ': ' + error.message);
+            this.sendSocketNotification('LOAD_ERROR', { identifier, message: error.message });
         }
 
-        console.debug(this.name + ': Next update will run in ' + Math.ceil(config.updateInterval / 1000) + ' seconds');
+        console.debug(this.name + '/' + identifier + ': Next update will run in ' + Math.ceil(config.updateInterval / 1000) + ' seconds');
         const id = setTimeout(function () {
             self.updateTimeouts.delete(id);
             self.executeAndReschedule(config);
@@ -129,19 +143,32 @@ module.exports = NodeHelper.create({
         const providerMap = await this.getProviderMap(config.locale);
         const newReleases = await this.getNewReleases(config.locale, config.search, new Date());
 
-        return newReleases.days[0].providers.reduce(function (result, entry) {
-            const provider = providerMap.get(entry.provider_id);
-            const items = entry.items.map(function (item) {
-                return {
-                    title: item.title,
-                    originalTitle: item.original_title,
-                    type: item.object_type,
-                    poster: 'https://images.justwatch.com' + item.poster.replace('{profile}', 's166'),
-                    provider_name: provider.clear_name,
-                    provider_icon: 'https://images.justwatch.com' + provider.icon_url.replace('{profile}', 's25'),
+        const result = newReleases.days[0].providers
+            .reduce(function (result, entry) {
+                const provider = providerMap.get(entry.provider_id) || { clean_name: 'unknown', icon_url: null };
+                const items = entry.items.map(function (item) {
+                    return {
+                        id: item.id,
+                        title: config.alwaysShowOriginalTitle ? item.original_title : item.title,
+                        year: item.original_release_year,
+                        type: item.object_type,
+                        poster: item.poster ? ('https://images.justwatch.com' + item.poster.replace('{profile}', 's166')) : null,
+                        providerName: provider.clear_name,
+                        providerIcon: provider.icon_url ? ('https://images.justwatch.com' + provider.icon_url.replace('{profile}', 's25')) : null
+                    };
+                });
+                return result.concat(items);
+            }, [])
+            .sort(multiSort(config.sort.map(function (x) {
+                return function (a, b) {
+                    if (x.key === 'year') {
+                        return (a.year - b.year) * (x.direction === 'asc' ? 1 : -1)
+                    } else {
+                        return a[x.key].localeCompare(b[x.key]) * (x.direction === 'asc' ? 1 : -1);
+                    }
                 };
-            });
-            return result.concat(items);
-        }, []);
+            })));
+
+        return uniqBy(result, item => item.id).slice(0, config.maxEntries);
     }
 });

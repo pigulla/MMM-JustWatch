@@ -1,0 +1,19 @@
+<table class="small">
+{% if items %}
+    {% for item in items %}
+        <tr class="normal">
+            {% if not config.hideProviderIcon %}
+                <td class="provider symbol align-left"><img src="{{ item.providerIcon }}"></td>
+            {% endif %}
+            <td class="title bright align-left">{{ item.title }}</td>
+            <td class="year light align-right">{{ item.year }}</td>
+        </tr>
+    {% else %}
+        <tr class="normal">
+            <td class="">no new releases</td>
+        </tr>
+    {% endfor %}
+{% else %}
+    loading
+{% endif %}
+</table>
